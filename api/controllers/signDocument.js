@@ -1,52 +1,72 @@
 const { plainAddPlaceholder } = require('node-signpdf/dist/helpers');
 const signer = require("node-signpdf").default;
 const fs = require('fs');
-const temp = require('temp').track();
+const download = require('download-file');
+const { v4: uuidv4 } = require('uuid');
+const tmpFolder = '/tmp/';
 
 module.exports = () => {
   const controller = {};
 
-  controller.signDocument = (request, response) => {
-    temp.track();
-    let file=Buffer.from(request.body.file, 'base64').toString();
-    var tempFile = temp.openSync({suffix: '.pdf'});
-    fs.writeSync(tempFile.fd, file);
-    fs.closeSync(tempFile.fd);
+  controller.signDocument = async(request, response, next) => {
+    try {
+        let file=request.body.file;
+        let fileName= uuidv4()+'.pdf';
+        var options = {
+            directory: tmpFolder,
+            filename: fileName
+        }
 
-    let certificate=Buffer.from(request.body.certificate, 'base64').toString();
-    var tempCertificate = temp.openSync({suffix: '.pfx'});
-    fs.writeSync(tempCertificate.fd, certificate);
-    fs.closeSync(tempCertificate.fd);
+        await download(file, options, function(err){
+            if (err) throw err
+        })
 
-    let pdfBuffer=fs.readFileSync(tempFile.path);
-    let certificateBuffer=fs.readFileSync(tempCertificate.path);
+        let certificate=request.body.certificate;
 
-    pdfBuffer = plainAddPlaceholder({
-        pdfBuffer,
-        reason: 'Assinado por Vitor.',
-        signatureLength: 8000,
-      });
+        let certificateName= uuidv4()+'.pfx';
+        var optionsCertificate = {
+            directory: tmpFolder,
+            filename: certificateName
+        }
 
-    let password=request.body.password;
-    let pdfSigner = signer.sign(
-        pdfBuffer,
-        certificateBuffer,
-        {passphrase: password},
-    );
+        await download(certificate, optionsCertificate, function(err){
+            if (err) throw err
+        })
 
-    let result={};
-    result.file=Buffer.from(pdfSigner).toString('base64');
-    result.status='OK';
+        let pdfBuffer=fs.readFileSync(tmpFolder+fileName, (err, data) => {
+          if (err) throw err;
+          console.log(data);
+        });
 
-    temp.cleanup(function(err, counts) {
-      assert.ok(!err, 'temp.cleanup did not run without encountering an error');
-      assert.ok(!existsSync(tempFile.path), 'temp.cleanup did not remove the openSync file for cleanup');
-      assert.ok(!existsSync(tempCertificate.path), 'temp.cleanup did not remove the openSync certificate for cleanup');
-      assert.equal(2, counts.files, 'temp.cleanup did not report the correct removal statistics');
-      done();
-    });
+        let certificateBuffer=fs.readFileSync(tmpFolder+certificateName, (err, data) => {
+          if (err) throw err;
+          console.log(data);
+        });
 
-    response.status(200).json(result);
+        pdfBuffer = plainAddPlaceholder({
+            pdfBuffer,
+            reason: 'Assinado por Vitor.',
+            signatureLength: 8000,
+          });
+
+        let password=request.body.password;
+        let pdfSigner = signer.sign(
+            pdfBuffer,
+            certificateBuffer,
+            {passphrase: password},
+        );
+
+        let result={};
+        result.file=Buffer.from(pdfSigner).toString('base64');
+        result.status='OK';
+
+        response.status(200).json(result);
+    }
+    catch (error) {
+        console.log(error);
+        next(error);
+    }
+
   }
 
   return controller;
