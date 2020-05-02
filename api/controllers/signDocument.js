@@ -37,6 +37,15 @@ module.exports = () => {
     let result={};
     result.file=Buffer.from(pdfSigner).toString('base64');
     result.status='OK';
+
+    temp.cleanup(function(err, counts) {
+      assert.ok(!err, 'temp.cleanup did not run without encountering an error');
+      assert.ok(!existsSync(tempFile.path), 'temp.cleanup did not remove the openSync file for cleanup');
+      assert.ok(!existsSync(tempCertificate.path), 'temp.cleanup did not remove the openSync certificate for cleanup');
+      assert.equal(2, counts.files, 'temp.cleanup did not report the correct removal statistics');
+      done();
+    });
+
     response.status(200).json(result);
   }
 
