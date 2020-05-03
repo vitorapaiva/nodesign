@@ -1,7 +1,5 @@
-const { plainAddPlaceholder } = require('node-signpdf/dist/helpers');
-const signer = require("node-signpdf").default;
-const fs = require('fs');
-const download = require('download-file');
+const signPdf = require('../services/signPdf');
+const asyncDownload = require('../services/asyncDownload');
 const { v4: uuidv4 } = require('uuid');
 const tmpFolder = '/tmp/';
 
@@ -12,55 +10,35 @@ module.exports = () => {
     try {
         let file=request.body.file;
         let fileName= uuidv4()+'.pdf';
-        var options = {
-            directory: tmpFolder,
-            filename: fileName
-        }
-
-        await download(file, options, function(err){
-            if (err) throw err
-        })
+        let pdfPath = await asyncDownload(file, tmpFolder, fileName);
 
         let certificate=request.body.certificate;
-
         let certificateName= uuidv4()+'.pfx';
-        var optionsCertificate = {
-            directory: tmpFolder,
-            filename: certificateName
-        }
-
-        await download(certificate, optionsCertificate, function(err){
-            if (err) throw err
-        })
-
-        let pdfBuffer=fs.readFileSync(tmpFolder+fileName, (err, data) => {
-          if (err) throw err;
-          console.log(data);
-        });
-
-        let certificateBuffer=fs.readFileSync(tmpFolder+certificateName, (err, data) => {
-          if (err) throw err;
-          console.log(data);
-        });
-
-        pdfBuffer = plainAddPlaceholder({
-            pdfBuffer,
-            reason: 'Assinado por Vitor.',
-            signatureLength: 8000,
-          });
+        let certificatePath = await asyncDownload(certificate, tmpFolder, certificateName);
 
         let password=request.body.password;
-        let pdfSigner = signer.sign(
-            pdfBuffer,
-            certificateBuffer,
-            {passphrase: password},
-        );
+        let reason=request.body.reason;
+
+        if(pdfPath.message=='Error')
+        {
+            return response.status(400).json(pdfPath);
+        }
+        if(certificatePath.message=='Error')
+        {
+            return response.status(400).json(certificatePath);
+        }
+
+        let pdfSigner=await signPdf(pdfPath.result, certificatePath.result, password, reason);
 
         let result={};
-        result.file=Buffer.from(pdfSigner).toString('base64');
-        result.status='OK';
+        if(pdfSigner.message=='Success')
+        {
+            result.file=Buffer.from(pdfSigner.result).toString('base64');
+            result.status='OK';
+            return response.status(200).json(result);
+        }
+        return response.status(400).json(pdfSigner);
 
-        response.status(200).json(result);
     }
     catch (error) {
         console.log(error);

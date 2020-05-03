@@ -17,6 +17,7 @@ module.exports = () => {
     .then('data')
     .then('controllers')
     .then('routes')
+    .then('services')
     .into(app);
 
   return app;
