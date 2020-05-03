@@ -11,7 +11,6 @@ module.exports = () => {
         let file=request.body.file;
         let fileName= uuidv4()+'.pdf';
         let pdfPath = await asyncDownload(file, tmpFolder, fileName);
-
         let certificate=request.body.certificate;
         let certificateName= uuidv4()+'.pfx';
         let certificatePath = await asyncDownload(certificate, tmpFolder, certificateName);

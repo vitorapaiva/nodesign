@@ -8,6 +8,15 @@ async function signPdf (pdfPath, certificatePath, certificatePassword, signReaso
       let certificateBuffer=await getFile(certificatePath);
       let pdfBuffer=await getFile(pdfPath);
 
+      if(pdfBuffer.message=='Error')
+      {
+          return(pdfBuffer);
+      }
+      if(certificateBuffer.message=='Error')
+      {
+          return(certificateBuffer);
+      }
+
       pdfBuffer = plainAddPlaceholder({
           pdfBuffer,
           reason: signReason,
