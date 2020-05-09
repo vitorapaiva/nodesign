@@ -1,5 +1,14 @@
 {
   "server": {
     "port" : 9090
+  },
+  "firebase": {
+    "apiKey": "AIzaSyCX16tq5rV8eFq9p6-DiOTu1D3qplrAVA8",
+    "authDomain": "node-sign.firebaseapp.com",
+    "databaseURL": "https://node-sign.firebaseio.com",
+    "projectId": ",node-sign",
+    "storageBucket": "node-sign.appspot.com",
+    "messagingSenderId": "117454908022",
+    "appId": "1:117454908022:web:34bb9f2d4cb2e816e94d57"
   }
 }
