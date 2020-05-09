@@ -25,6 +25,7 @@
     "express": "^4.17.1",
     "node-forge": "^0.7.6",
     "node-signpdf": "^1.2.3",
+    "nodemon": "^2.0.3",
     "temp": "^0.9.1",
     "uuid": "^8.0.0"
   }

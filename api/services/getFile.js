@@ -3,17 +3,16 @@ const fs = require('fs');
 module.exports = getFile;
 
 function getFile(filePath) {
-    return new Promise ((resolve,reject) => {
-        if((typeof filePath)=='string'){
-            try{
-                let fileBuffer=fs.readFile(filePath, (err, data) => {
-                  if (err) throw err;
-                  resolve(data);
+    return new Promise((resolve, reject) => {
+        if ((typeof filePath) == 'string') {
+            try {
+                let fileBuffer = fs.readFile(filePath, (err, data) => {
+                    if (err) throw err;
+                    resolve(data);
                 });
-            }
-            catch(error){
+            } catch (error) {
                 return reject(error).catch(err => {
-                  throw new Error(err);
+                    throw new Error(err);
                 });
             }
         }
