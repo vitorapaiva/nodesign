@@ -1,17 +1,28 @@
 const firebaseClient = require('firebase');
 const config         = require('config');
 
-firebaseClient.initializeApp(config.firebase);
+if (!firebaseClient.apps.length) {
+    firebaseClient.initializeApp(config.firebase);
+}
 
 let firebase = {};
 
-firebase.signInWithEmailAndPassword = function (email, password) {
+firebase.signInWithEmailAndPassword = async function (email, password) {
     firebaseClient.auth().signInWithEmailAndPassword(email, password)
         .then((data) => {
             console.log(data);
+
+            return data;
         })
         .catch((error) => {
             console.log(error);
+
+            let result = {};
+
+            result.message = "Services/Firebase.js Error";
+            result.error = error;
+
+            return result;
         })
 }
 
